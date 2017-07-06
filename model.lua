@@ -7,14 +7,11 @@
 --  of patent rights can be found in the PATENTS file in the same directory.
 --
 require 'nn'
-require 'cunn'
-require 'cudnn'
 require 'optim'
 
 --[[
    1. Create Model
    2. Create Criterion
-   3. Convert model to CUDA
 ]]--
 
 -- 1. Create Network
@@ -46,36 +43,31 @@ if opt.shareGradInput then
       local moduleType = torch.type(m)
       if torch.isTensor(m.gradInput) and moduleType ~= 'nn.ConcatTable' then
          if cache[moduleType] == nil then
-            cache[moduleType] = torch.CudaStorage(1)
+            cache[moduleType] = torch.Storage(1)
          end
-         m.gradInput = torch.CudaTensor(cache[moduleType], 1, 0)
+         m.gradInput = torch.Tensor(cache[moduleType], 1, 0)
       end
    end)
    for i, m in ipairs(model:findModules('nn.ConcatTable')) do
       if cache[i % 2] == nil then
-         cache[i % 2] = torch.CudaStorage(1)
+         cache[i % 2] = torch.Storage(1)
       end
-      m.gradInput = torch.CudaTensor(cache[i % 2], 1, 0)
+      m.gradInput = torch.Tensor(cache[i % 2], 1, 0)
    end
 end
 
 
 --  apply parallel 
-model:cuda()
-if opt.nGPU >1 then
-   model = makeDataParallel(model, opt.nGPU,true,true)
-end
+model:float()
+-- TODO: Make it parallel with CPU?
+--model = makeDataParallel(model, opt.nGPU,true,true)
 
 --getting the parameters and gradient pointers
 parameters, gradParameters = model:getParameters()
 realParams = parameters:clone()
-convNodes = model:findModules('cudnn.SpatialConvolution')
+convNodes = model:findModules('nn.SpatialConvolution')
 
 
-
--- much faster
- cudnn.fastest = true
- cudnn.benchmark = true
 -- 2. Create Criterion
 criterion = nn.ClassNLLCriterion()
 
@@ -84,11 +76,5 @@ print(model)
 
 print('=> Criterion')
 print(criterion)
-
--- 3. Convert model to CUDA
-print('==> Converting model to CUDA')
--- model is converted to CUDA in the init script itself
--- model = model:cuda()
-criterion:cuda()
 
 collectgarbage()

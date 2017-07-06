@@ -8,7 +8,6 @@
 --
 -- debugger = require('fb.debugger')
 require 'torch'
-require 'cutorch'
 require 'paths'
 require 'xlua'
 require 'optim'
@@ -31,7 +30,6 @@ opt.imageCrop = model.imageCrop or opt.imageCrop
 
 print(opt)
 
-cutorch.setDevice(opt.GPU) -- by default, use GPU 1
 torch.manualSeed(opt.manualSeed)
 
 print('Saving everything to: ' .. opt.save)

@@ -19,7 +19,6 @@ function test()
 
    batchNumber = 0
    N = 0
-   cutorch.synchronize()
    timer:reset()
 
    -- set the dropouts to evaluate mode
@@ -47,7 +46,6 @@ function test()
    end
 
    donkeys:synchronize()
-   cutorch.synchronize()
 
    if opt.binaryWeight then
       parameters:copy(realParams)
@@ -74,8 +72,8 @@ end -- of test()
 -----------------------------------------------------------------------------
 
 
-local inputs = torch.CudaTensor()
-local labels = torch.CudaTensor()
+local inputs = torch.Tensor()
+local labels = torch.Tensor()
 
 function testBatch(inputsCPU, labelsCPU)
    batchNumber = batchNumber + opt.batchSize
@@ -86,7 +84,6 @@ function testBatch(inputsCPU, labelsCPU)
 
    local outputs = model:forward(inputs)
    local err = criterion:forward(outputs, labels)
-   cutorch.synchronize()
    local pred = outputs:float()
 
    loss = loss + err
